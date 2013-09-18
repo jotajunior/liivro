@@ -1,5 +1,8 @@
 <?php
 
+// Composer autoload
+require '../vendor/autoload.php';
+
 try {
 
     //Register an autoloader
