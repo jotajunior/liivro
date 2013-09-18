@@ -1,5 +1,9 @@
 {
     "require": {
-    	"facebook/php-sdk": "dev-master"
+    	"facebook/php-sdk": "dev-master",
+	"sendgrid/sendgrid": "~1.0.0",
+	"aws/aws-sdk-php": "2.4.6",
+	"phpunit/phpunit": "3.7.*",
+	"phalcon/incubator": "dev-master"
 	}
 }
