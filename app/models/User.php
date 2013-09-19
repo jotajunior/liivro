@@ -9,6 +9,7 @@ class User extends \Phalcon\Mvc\Model
 	private $email = NULL;
 	private $last_updated = NULL;
 	private $status = NULL;
+	private $university = NULL;
 
 	public function initialize()
 	{
@@ -18,9 +19,9 @@ class User extends \Phalcon\Mvc\Model
 
 	private function getFacebookParams()
 	{
-		return array( "appId"  => $this->config->facebook->id,
-			     	  "secret" => $this->config->facebook->secret,
-					  "cookie" => false
+		return array("appId"  => $this->config->facebook->id,
+					 "secret" => $this->config->facebook->secret,
+					 "cookie" => false
 					);
 	}
 
@@ -60,9 +61,9 @@ class User extends \Phalcon\Mvc\Model
 	private function facebookInformationIsRefreshed()
 	{
 		$user = self::findOne(array(
-    						"conditions" => "uid = ?1",
-						    "bind" => array(1 => $this->uid)
-						  ));
+							"conditions" => "uid = ?1",
+							"bind" => array(1 => $this->uid)
+							));
 		
 		if ($user) {
 			$lastUpdated = $user['last_updated'];
@@ -99,6 +100,9 @@ class User extends \Phalcon\Mvc\Model
 	{
 		settype($university_id, 'int');
 		
+		if (!$university_id) return false;
+
+		$this->university = $university_id;
 		$this->status = 0;
 		$this->save();
 	}
