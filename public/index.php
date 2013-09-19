@@ -26,6 +26,12 @@ try {
         return $view;
     });
 
+	$di->set('url', function() use($config) {
+    	$url = new Phalcon\Mvc\Url();
+    	$url->setBaseUri($config->application->baseUri);
+    	return $url;
+	});
+
 	$di->set('db', function() use ($config) {
         return new \Phalcon\Db\Adapter\Pdo\Mysql(array(
             "host" => $config->database->host,
