@@ -18,7 +18,7 @@ try {
     $di = new Phalcon\DI\FactoryDefault();
 
     //Setting up the view component
-    $di->set('config', $config);
+    $di->setShared('config', $config);
 
     $di->set('view', function() use ($config) {
         $view = new \Phalcon\Mvc\View();
@@ -41,7 +41,7 @@ try {
         ));
     });
     
-    $di->set('session', function() {
+    $di->setShared('session', function() {
     	$session = new Phalcon\Session\Adapter\Files();
     	$session->start();
     	return $session;
