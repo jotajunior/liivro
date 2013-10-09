@@ -10,7 +10,7 @@ class IndexController extends \Phalcon\Mvc\Controller
 	public function indexAction()
 	{
 		$auth = $this->users->facebookAuth();
-									echo 2;
+
 		if (!$auth) {
 			$facebook_login_url = $this->users->getFacebookLoginUrl();
 			
