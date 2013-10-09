@@ -8,14 +8,6 @@ try {
 
     //Register an autoloader
     $loader = new \Phalcon\Loader();
-    
-    $params = array(
-    				 "appId"  => $config->facebook->id,
-					 "secret" => $config->facebook->secret,
-					 "cookie" => false
-				);
-
-	$facebook = new Facebook($params);
 
     $loader->registerDirs(array(
         $config->application->controllersDir,
@@ -39,8 +31,6 @@ try {
     	$url->setBaseUri($config->application->baseUri);
     	return $url;
 	});
-	
-	$di->setShared('facebook', $facebook);
 
 	$di->set('db', function() use ($config) {
         return new \Phalcon\Db\Adapter\Pdo\Mysql(array(

@@ -28,7 +28,12 @@ class Users extends \Phalcon\Mvc\Model
         $this->db = \Phalcon\DI\FactoryDefault::getDefault()->get('db');
         $this->session = \Phalcon\DI\FactoryDefault::getDefault()->getShared('session');
         $this->url = \Phalcon\DI\FactoryDefault::getDefault()->getShared('url');
-        $this->facebook = \Phalcon\DI\FactoryDefault::getDefault()->getShared('facebook');
+        
+        $this->facebook = new Facebook(array(
+    					 				"appId"  => $config->facebook->id,
+					 	 				"secret" => $config->facebook->secret,
+					 	 				"cookie" => false
+										));
 	}
 
 	private function extractUserInformation()
