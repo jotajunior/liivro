@@ -30,8 +30,8 @@ class Users extends \Phalcon\Mvc\Model
         $this->url = \Phalcon\DI\FactoryDefault::getDefault()->getShared('url');
         
         $this->facebook = new Facebook(array(
-    					 				"appId"  => $config->facebook->id,
-					 	 				"secret" => $config->facebook->secret,
+    					 				"appId"  => $this->config->facebook->id,
+					 	 				"secret" => $this->config->facebook->secret,
 					 	 				"cookie" => false
 										));
 	}
