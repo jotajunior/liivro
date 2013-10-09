@@ -2,14 +2,20 @@
 
 class Users extends \Phalcon\Mvc\Model
 {
-	private static $facebook = NULL;
 	private $id;
 	private $uid = NULL;
 	private $name;
-	private $email = NULL;
+	private $general_email = NULL;
+	private $university_email = NULL;
 	private $last_updated = NULL;
 	private $status = NULL;
 	private $university = NULL;
+	private $created_at = NULL;
+
+	const ACTIVE = 0;
+	const IN_TRIAL = 1;
+	const INVALID = 2;
+	const VISITOR = 3;
 
 	public function initialize()
 	{
@@ -21,46 +27,75 @@ class Users extends \Phalcon\Mvc\Model
         $this->config = \Phalcon\DI\FactoryDefault::getDefault()->getShared('config');
         $this->db = \Phalcon\DI\FactoryDefault::getDefault()->get('db');
         $this->session = \Phalcon\DI\FactoryDefault::getDefault()->getShared('session');
+        $this->url = \Phalcon\DI\FactoryDefault::getDefault()->getShared('url');
+        $this->facebook = \Phalcon\DI\FactoryDefault::getDefault()->getShared('facebook');
+	}
+
+	private function extractUserInformation()
+	{
+		$user = $this->getByUid();
+
+		if ($user == array()) return false;
+		
+		$this->id = $user['id'];
+		$this->university = $user['university'];
+		$this->general_email = $user['general_email'];
+		$this->university_email = $user['university_email'];
+		$this->name = $user['name'];
+		$this->status = $user['status'];
+		$this->created_at = $user['created_at'];
+		
+		return true;
+	}
+
+	private function checkStatus()
+	{
+		if ($this->status == self::ACTIVE) return true;
+		
+		$now = new DateTime('now');
+		$now = $now->format('Y-m-d H:i:s');
+		$then = new DateTime($this->created_at);
+
+		$interval = $now->diff($then)->format("%d");
+
+		if ($interval >= $this->config->trial->daysToExpire) {
+		
+			$this->status = self::INVALID;
+			$this->session->set('status', self::INVALID);
+		
+			return $this->db->update(
+			   			      "users",
+					   		  array("status"),
+					   		  array(self::INVALID),
+					   		  "id = ".$this->id
+					);
+		}
 	}
 
 	private function registerLoginSessions()
 	{
-		if ($this->uid == NULL) return false;
+		if ($this->uid == NULL)
+			return false;
+
+		$this->extractUserInformation();
 
 		if (!$this->isAuthenticated()) {
 			$this->session->set('uid', $this->uid);
 			$this->session->set('id', $this->id);
 			$this->session->set('university', $this->university);
-			$this->session->set('email', $this->email);
+			$this->session->set('general_email', $this->general_email);
+			$this->session->set('university_email', $this->university_email);
 			$this->session->set('name', $this->name);
+			$this->session->set('status', $this->status);
+			$this->session->set('created_at', $this->created_at);
 		}
 		
 		return true;
 	}
 
-	private function getFacebookParams()
-	{
-		return array("appId"  => $this->config->facebook->id,
-					 "secret" => $this->config->facebook->secret,
-					 "cookie" => false
-					);
-	}
-
-	private function getFacebookInstance()
-	{
-		$params = $this->getFacebookParams();
-		
-		if (self::$facebook == NULL) {
-			self::$facebook = new Facebook($params);
-		}
-		
-		return self::$facebook;
-	}
-
 	private function isAuthenticatedOnFacebook()
 	{
-		$facebook = $this->getFacebookInstance();
-		$id = $facebook->getUser();
+		$id = $this->facebook->getUser();
 		
 		if ($id == 0) {
 			return false;
@@ -72,11 +107,10 @@ class Users extends \Phalcon\Mvc\Model
 	
 	private function getUserFacebookInformation()
 	{
-		$facebook = $this->getFacebookInstance();
-		$result = $facebook->api('/me', 'GET');
+		$result = $this->facebook->api('/me', 'GET');
 
 		$this->name = $result['name'];
-		$this->email = $result['email'];
+		$this->general_email = $result['email'];
 	}
 
 	private function getByUid()
@@ -93,7 +127,7 @@ class Users extends \Phalcon\Mvc\Model
 
 		if ($user) {
 			$lastUpdated = $user['last_updated'];
-			if ($lastUpdated == NULL) return false;
+
 
 			$now = new DateTime('now');
 			$now = $now->format('Y-m-d H:i:s');
@@ -101,7 +135,13 @@ class Users extends \Phalcon\Mvc\Model
 
 			$interval = $now->diff($then)->format("%d");
 
-			if ($interval < $this->config->facebook->daysToUpdate) return true;
+			$this->last_updated = $now;
+
+			if ($lastUpdated == NULL)
+				return false;
+
+			if ($interval < $this->config->facebook->daysToUpdate)
+				return true;
 		}
 		
 		return false;
@@ -112,7 +152,15 @@ class Users extends \Phalcon\Mvc\Model
 		$user = $this->getByUid();
 
 		if (!$user) {
+			$this->status = self::IN_TRIAL;
 			return $this->save();
+		} else {
+			return $this->db->update(
+				"users",
+				array("last_updated"),
+				array($this->last_updated),
+				"uid = ".$this->uid
+				);
 		}
 		
 		return true;
@@ -120,23 +168,20 @@ class Users extends \Phalcon\Mvc\Model
 	
 	public function getFacebookLoginUrl()
 	{
-		$facebook = $this->getFacebookInstance();
 		$params = array(
   					'scope' => 'email',
 				    'redirect_uri' => $this->config->application->baseUri
 					);
-		return $facebook->getLoginUrl($params);
+		return $this->facebook->getLoginUrl($params);
 	}
 	
 	public function facebookAuth()
-	{
-		$facebook = $this->getFacebookInstance();
-		
+	{	
 		if ($this->isAuthenticatedOnFacebook()) {
-
 			$this->getUserFacebookInformation();
 			$this->registerLoginSessions();
-
+			$this->checkStatus();
+			
 			if (!$this->facebookInformationIsRefreshed()) {
 				return $this->refreshInformation();
 			}
@@ -154,16 +199,37 @@ class Users extends \Phalcon\Mvc\Model
 		return $this->db->update(
 				"users",
 				array("university", "status"),
-				array($university_id, 0),
-				"uid = ".$this->uid
+				array($university_id, self::ACTIVE),
+				"id = ".$this->id
 				);
 	}
 	
 	public function isAuthenticated()
 	{
-		return $this->session->has('uid');
+		return $this->session->has('id');
 	}
 	
+	public function isActive()
+	{
+		return $this->isAllowed(self::ACTIVE);
+	}
+	
+	public function isAllowed($allowed)
+	{
+		if (!$this->isAuthenticated()) {
+			$status = self::VISITOR;
+		} else {
+			$on_session = $this->session->get('status');
+			$status = $on_session ? $on_session : self::VISITOR;
+		}
+		
+		if (is_array($allowed)) {
+			return in_array($status, $allowed);
+		} else {
+			return $status == $allowed;
+		}
+	}
+
 	public function logout()
 	{
 		$this->session->destroy();

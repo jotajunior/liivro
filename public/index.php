@@ -26,10 +26,19 @@ try {
         return $view;
     });
 
-	$di->set('url', function() use($config) {
+	$di->setShared('url', function() use($config) {
     	$url = new Phalcon\Mvc\Url();
     	$url->setBaseUri($config->application->baseUri);
     	return $url;
+	});
+	
+	$di->setShared('facebook', function() use($config) {
+    	$params = array(
+    				 "appId"  => $config->facebook->id,
+					 "secret" => $config->facebook->secret,
+					 "cookie" => false
+				);
+		return new Facebook($params);
 	});
 
 	$di->set('db', function() use ($config) {

@@ -5,6 +5,11 @@ class Universities extends \Phalcon\Mvc\Model
 	public function initialize()
 	{
 		$this->hasMany("id", "Users", "university");
+
+        $this->config = \Phalcon\DI\FactoryDefault::getDefault()->getShared('config');
+        $this->db = \Phalcon\DI\FactoryDefault::getDefault()->get('db');
+        $this->session = \Phalcon\DI\FactoryDefault::getDefault()->getShared('session');
+        $this->url = \Phalcon\DI\FactoryDefault::getDefault()->getShared('url');
 	}
 	
 	public function findByAcronym($acronym)
@@ -43,7 +48,7 @@ class Universities extends \Phalcon\Mvc\Model
 
 	private function getListOfSupportedEmailHosts()
 	{
-		return array(1 => array("ufmg.br", "dcc.ufmg.br", "mat.ufmg.br", "fis.ufmg.br")
+		return array(1 => array("ufmg.br")
 					);
 	}
 
@@ -61,24 +66,36 @@ class Universities extends \Phalcon\Mvc\Model
 		throw new \InvalidArgumentException("Your university is not currently supported.");
 	}
 
-	private function saveVerificationHash($hash, $email) {
-		$is_saved = false; // select hash where email == $email from verification_hashes
-		
-		if ($is_saved) return false;
-		
-		// save verification hash to db
+	private function saveVerificationHash($hash, $email)
+	{
+		return $this->db->insert(
+						 "verification_hashes",
+						 array("email", "hash"),
+						 array($email, $hash)
+				);
 	}
 	
-	private function deleteVerificationHash($hash, $email) {
-		
+	private function deleteVerificationHash($hash, $email)
+	{
+		return $this->db->execute("DELETE FROM verification_hashes WHERE email = ? AND hash = ?", array(1 => $email, 2 => $hash));
 	}
 
-	private function checkVerificationHash($hash, $email) {
+	private function checkVerificationHash($hash, $email)
+	{
 		$hash = urldecode($hash);
 		$email = urldecode($email);
+		
+		$sql = "SELECT * FROM verification_hashes WHERE hash = :hash AND email = :email ORDER BY id DESC LIMIT 1";
+		$bindParams = array("hash" => $hash, "email" => $email);
+		
+		$result = $this->db->fetchOne($sql, \Phalcon\Db::FETCH_ASSOC, $bindParams);
+		
+		if ($result) return true;
+		return false;
 	}
 
-	private function generateVerificationUrl($hash, $email) {
+	private function generateVerificationUrl($hash, $email)
+	{
 		$url = $this->url->get("user/verify");
 		$url .= "/".urlencode($hash)."/".urlencode($email);
 
@@ -112,9 +129,24 @@ class Universities extends \Phalcon\Mvc\Model
 		}
 	}
 
-	public function sendVerificationEmail($email)
+	private function checkIfIsAlreadyActivated($id)
+	{
+		settype($uid, 'int');
+		$sql = "SELECT status FROM users WHERE id = :id";
+		$bindParams = array("id" => $uid);
+		
+		$result = $this->db->fetchOne($sql, \Phalcon\Db::FETCH_ASSOC, $bindParams);
+		
+		if ($result == array())
+			throw new \Exception("Invalid user id for verification e-mail.");
+		else if ($result[0]['status'] == 0)
+			throw new \Exception("Your account has already been activated.");
+	}
+
+	public function sendVerificationEmail($email, $id)
 	{
 		$this->checkIfIsSupported($email);
+		$this->checkIfIsAlreadyActivated($id);
 		
 		$hash = $this->generateVerificationHash($email);
 		$this->saveVerificationHash($hash, $email);
