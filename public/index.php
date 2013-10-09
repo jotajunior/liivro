@@ -21,10 +21,10 @@ try {
     $di->setShared('config', $config);
 
     $di->set('view', function() use ($config) {
-        $view = new \Phalcon\Mvc\View();
+        $view = new \Phalcon\Mvc\View\Simple();
         $view->setViewsDir($config->application->viewsDir);
         return $view;
-    });
+    }, true);
 
 	$di->setShared('url', function() use($config) {
     	$url = new Phalcon\Mvc\Url();
@@ -49,6 +49,8 @@ try {
 
     //Handle the request
     $application = new \Phalcon\Mvc\Application($di);
+
+	$application->useImplicitView(false);
 
     echo $application->handle()->getContent();
 
