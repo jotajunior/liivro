@@ -1,10 +1,10 @@
 <?php
 
 // Composer autoload
-require '../vendor/autoload.php';
+require '/var/www/vendor/autoload.php';
 
 try {
-	$config = new Phalcon\Config\Adapter\Ini('../app/config/config.ini');
+	$config = new Phalcon\Config\Adapter\Ini('/var/www/app/config/config.ini');
 
     //Register an autoloader
     $loader = new \Phalcon\Loader();
