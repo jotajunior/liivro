@@ -14,7 +14,7 @@ class IndexController extends \Phalcon\Mvc\Controller
 		if (!$auth) {
 			$facebook_login_url = $this->users->getFacebookLoginUrl();
 			
-			echo $this->view->render('landing/index', array(
+			echo $this->view->render('landing/index.php', array(
 													   "facebook_login_url" => $facebook_login_url
 													  )
 								);
