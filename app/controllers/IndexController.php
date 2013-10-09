@@ -10,16 +10,14 @@ class IndexController extends \Phalcon\Mvc\Controller
 	public function indexAction()
 	{
 		$auth = $this->users->facebookAuth();
-									echo 2;
+
 		if (!$auth) {
 			$facebook_login_url = $this->users->getFacebookLoginUrl();
 			
-			$this->view->render('landing/index', array(
-													   "facebook_login_url" => $facebook_login_url
-													  )
-								);
-							echo 1;
-
+			echo $this->view->render('landing/index', array(
+														   "facebook_login_url" => $facebook_login_url
+														  )
+									);
 		} else {
 			echo "Ola, ".$this->session->get('name');
 						echo "<a href='/liivro/index/logout'>logout</a>";
