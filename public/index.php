@@ -42,9 +42,15 @@ try {
     });
     
     $di->setShared('session', function() {
-    	$session = new \Phalcon\Session\Adapter\Files();
-    	$session->start();
-    	return $session;
+	    $memcache = new Phalcon\Session\Adapter\Memcache(array(
+    	    'host'          => '127.0.0.1',
+        	'post'          => 11211,
+        	'lifetime'      => 8600,
+        	'prefix'        => 'liivro',
+        	'persistent'    => false
+    	));
+    	$memcache->start();
+    	return $memcache;
 	});
 
     //Handle the request
