@@ -1,4 +1,5 @@
 <?php
+
 use Phalcon\Events\Event,
 	Phalcon\Mvc\User\Plugin,
 	Phalcon\Mvc\Dispatcher,
@@ -15,99 +16,7 @@ class Security extends Plugin
 	public function __construct($dependencyInjector)
 	{
 		$this->_dependencyInjector = $dependencyInjector;
-	}
-
-	private function addResource($resources)
-	{
-		foreach ($resources as $resource => $actions) {
-			$this->acl->addResource(new Phalcon\Acl\Resource($resource), $actions);
-		}
-	}
-	
-	private function grantAccess($name, $resources)
-	{
-		foreach ($resources as $resource => $actions) {
-			foreach ($actions as $action) {
-				$this->acl->allow($name, $resource, $action);
-			}
-		}
-	}
-
-	private function registerActiveAreaResources()
-	{
-		$activeResources = array(
-				'listing' => array('index', 'create'),
-			);
-		$this->addResource($activeResources);
-		return $activeResources;
-	}
-	
-	private function registerTrialAreaResources()
-	{
-		$trialResources = array(
-				'listing' => array('index')
-			);
-		$this->addResource($trialResources);
-		return $trialResources;
-	}
-	
-	private function registerPublicAreaResources()
-	{
-		$activeResources = array(
-				'index' => array('index', 'testSession'),
-			);
-		$this->addResource($activeResources);
-		return $activeResources;
-	}
-	
-	private function grantPublicResource($roles, $resources)
-	{
-		foreach ($roles as $role) {
-			foreach ($resources as $resource => $actions) {
-				$this->acl->allow($role->getName(), $resource, '*');
-			}
-		}
-	}
-	
-	private function registerRoles()
-	{
-		$roles = array(
-				'active' => new Phalcon\Acl\Role('Active'),
-				'in_trial' => new Phalcon\Acl\Role('In_trial'),
-				'invalid' => new Phalcon\Acl\Role('Invalid'),
-				'visitor' => new Phalcon\Acl\Role('Visitor')
-			);
-
-		foreach ($roles as $role) {
-			$this->acl->addRole($role);
-		}
-		return $roles;
-	}
-	
-	public function getAcl()
-	{
-		if (!isset($this->persistent->acl)) {
-
-			$this->acl = new Phalcon\Acl\Adapter\Memory();
-
-			$this->acl->setDefaultAction(Phalcon\Acl::DENY);
-
-			$roles = $this->registerRoles();
-	
-			$activeResources = $this->registerActiveAreaResources();
-			$this->grantAccess('Active', $activeResources);
-
-			$trialResources = $this->registerTrialAreaResources();
-			$this->grantAccess('In_trial', $trialResources);			
-			
-			
-			$publicResources = $this->registerPublicAreaResources();
-			$this->grantPublicResource($roles, $publicResources);
-
-			$this->persistent->acl = $this->acl;
-		}
-
-		return $this->persistent->acl;
+		$this->session = \Phalcon\DI\FactoryDefault::getDefault()->getShared('session');
 	}
 
 	private function getRole()
@@ -133,27 +42,94 @@ class Security extends Plugin
         }
 		return $role;
 	}
+
+	public function getAcl()
+	{
+		if (!isset($this->persistent->acl)) {
+
+			$acl = new Phalcon\Acl\Adapter\Memory();
+
+			$acl->setDefaultAction(Phalcon\Acl::DENY);
+
+			//Register roles
+			$roles = array(
+				'active' => new Phalcon\Acl\Role('Active'),
+				'in_trial' => new Phalcon\Acl\Role('In_trial')
+				'invalid' => new Phalcon\Acl\Role('Invalid'),
+				'visitor' => new Phalcon\Acl\Role('Visitor')
+			);
+			foreach ($roles as $role) {
+				$acl->addRole($role);
+			}
+
+			//Private area resources
+			$privateResources = array(
+				'index' => array('index', 'testSession'),
+				'listing' => array('index'),
+				'books' => array('show', 'create')
+			);
+			foreach ($privateResources as $resource => $actions) {
+				$acl->addResource(new Phalcon\Acl\Resource($resource), $actions);
+			}
+
+			//Public area resources
+			$publicResources = array(
+				'index' => array('index', 'testSession'),
+			);
+			foreach ($publicResources as $resource => $actions) {
+				$acl->addResource(new Phalcon\Acl\Resource($resource), $actions);
+			}
+
+			$protectedResources = array(
+					'index' => array('index'),
+					'listing' => array('index')
+				);
+			foreach ($protectedResources as $resource => $actions) {
+				$acl->addResource(new Phalcon\Acl\Resource($resource), $actions);
+			}
+			//Grant access to public areas to both users and guests
+			foreach ($roles as $role) {
+				foreach ($publicResources as $resource => $actions) {
+					$acl->allow($role->getName(), $resource, '*');
+				}
+			}
+
+			//Grant acess to private area to role Users
+			foreach ($privateResources as $resource => $actions) {
+				foreach ($actions as $action){
+					$acl->allow('Active', $resource, $action);
+				}
+			}
+
+			//The acl is stored in session, APC would be useful here too
+			$this->persistent->acl = $acl;
+		}
+
+		return $this->persistent->acl;
+	}
+
 	/**
 	 * This action is executed before execute any action in the application
 	 */
 	public function beforeDispatch(Event $event, Dispatcher $dispatcher)
 	{
+
 		$role = $this->getRole();
+
 		$controller = $dispatcher->getControllerName();
 		$action = $dispatcher->getActionName();
 
-		$this->acl = $this->getAcl();
+		$acl = $this->getAcl();
 
-		$allowed = $this->acl->isAllowed($role, $controller, $action);
+		$allowed = $acl->isAllowed($role, $controller, $action);
 		if ($allowed != Acl::ALLOW) {
 			$this->flash->error("You don't have access to this module");
-			echo $controller, " ", $action; print_r($role); 
-			/*$dispatcher->forward(
+			$dispatcher->forward(
 				array(
 					'controller' => 'index',
 					'action' => 'index'
 				)
-			);*/
+			);
 			return false;
 		}
 
