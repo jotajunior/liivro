@@ -17,7 +17,99 @@ class Security extends Plugin
 		$this->_dependencyInjector = $dependencyInjector;
 	}
 
+	private function addResource($resources)
+	{
+		foreach ($resources as $resource => $actions) {
+			$this->acl->addResource(new Phalcon\Acl\Resource($resource), $actions);
+		}
+	}
 	
+	private function grantAccess($name, $resources)
+	{
+		foreach ($resources as $resource => $actions) {
+			foreach ($actions as $action) {
+				$this->acl->allow($name, $resource, $action);
+			}
+		}
+	}
+
+	private function registerActiveAreaResources()
+	{
+		$activeResources = array(
+				'listing' => array('index', 'create'),
+			);
+		$this->addResource($activeResources);
+		return $activeResources;
+	}
+	
+	private function registerTrialAreaResources()
+	{
+		$trialResources = array(
+				'listing' => array('index')
+			);
+		$this->addResource($trialResources);
+		return $trialResources;
+	}
+	
+	private function registerPublicAreaResources()
+	{
+		$activeResources = array(
+				'index' => array('index', 'testSession'),
+			);
+		$this->addResource($activeResources);
+		return $activeResources;
+	}
+	
+	private function grantPublicResource($roles, $resources)
+	{
+		foreach ($roles as $role) {
+			foreach ($resources as $resource => $actions) {
+				$this->acl->allow($role->getName(), $resource, '*');
+			}
+		}
+	}
+	
+	private function registerRoles()
+	{
+		$roles = array(
+				'active' => new Phalcon\Acl\Role('Active'),
+				'in_trial' => new Phalcon\Acl\Role('In_trial'),
+				'invalid' => new Phalcon\Acl\Role('Invalid'),
+				'visitor' => new Phalcon\Acl\Role('Visitor')
+			);
+
+		foreach ($roles as $role) {
+			$this->acl->addRole($role);
+		}
+		return $roles;
+	}
+	
+	public function getAcl()
+	{
+		if (!isset($this->persistent->acl)) {
+
+			$this->acl = new Phalcon\Acl\Adapter\Memory();
+
+			$this->acl->setDefaultAction(Phalcon\Acl::DENY);
+
+			$roles = $this->registerRoles();
+	
+			$activeResources = $this->registerActiveAreaResources();
+			$this->grantAccess('Active', $activeResources);
+
+			$trialResources = $this->registerTrialAreaResources();
+			$this->grantAccess('In_trial', $trialResources);			
+			
+			
+			$publicResources = $this->registerPublicAreaResources();
+			$this->grantPublicResource($roles, $publicResources);
+
+			$this->persistent->acl = $this->acl;
+		}
+
+		return $this->persistent->acl;
+	}
+
 	private function getRole()
 	{
 		$status = $this->session->get('status');
@@ -49,7 +141,6 @@ class Security extends Plugin
 		$role = $this->getRole();
 		$controller = $dispatcher->getControllerName();
 		$action = $dispatcher->getActionName();
-		echo $controller, " ", $action;
 
 		$this->acl = $this->getAcl();
 

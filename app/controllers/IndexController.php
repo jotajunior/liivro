@@ -25,7 +25,7 @@ class IndexController extends \Phalcon\Mvc\Controller
 		}
 	}
 	
-	public function testSession()
+	public function testSessionAction()
 	{
 		$this->session->set("whatever", 2);
 		var_dump($this->session->get("whatever"));
