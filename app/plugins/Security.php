@@ -57,7 +57,7 @@ class Security extends Plugin
 				'index' => array('index', 'testSession'),
 			);
 		$this->addResource($activeResources);
-		return $publicResources;
+		return $activeResources;
 	}
 	
 	private function grantPublicResource($roles, $resources)
