@@ -54,7 +54,7 @@ class Security extends Plugin
 			//Register roles
 			$roles = array(
 				'active' => new Phalcon\Acl\Role('Active'),
-				'in_trial' => new Phalcon\Acl\Role('In_trial')
+				'in_trial' => new Phalcon\Acl\Role('In_trial'),
 				'invalid' => new Phalcon\Acl\Role('Invalid'),
 				'visitor' => new Phalcon\Acl\Role('Visitor')
 			);
