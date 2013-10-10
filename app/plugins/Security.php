@@ -53,7 +53,7 @@ class Security extends Plugin
 	
 	private function registerPublicAreaResources()
 	{
-		$publicResources = array(
+		$activeResources = array(
 				'index' => array('index'),
 			);
 		$this->addResource($activeResources);
