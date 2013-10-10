@@ -64,7 +64,7 @@ class Security extends Plugin
 	{
 		foreach ($roles as $role) {
 			foreach ($resources as $resource => $actions) {
-				$acl->allow($role->getName(), $resource, '*');
+				$this->acl->allow($role->getName(), $resource, '*');
 			}
 		}
 	}
