@@ -20,7 +20,7 @@ class Security extends Plugin
 	private function addResource($resources)
 	{
 		foreach ($resources as $resource => $actions) {
-				$this->acl->addResource(new Phalcon\Acl\Resource($resource), $actions);
+			$this->acl->addResource(new Phalcon\Acl\Resource($resource), $actions);
 		}
 	}
 	
@@ -60,16 +60,7 @@ class Security extends Plugin
 		return $publicResources;
 	}
 	
-	private function attachRoleToResource($role, $resource)
-	{
-		foreach ($resource as $resource => $actions) {
-			foreach ($actions as $action) {
-				$this->acl->allow($role, $resource, $action);
-			}
-		}
-	}
-	
-	private function attachPublicResource($roles, $resources)
+	private function grantPublicResource($roles, $resources)
 	{
 		foreach ($roles as $role) {
 			foreach ($resources as $resource => $actions) {
@@ -104,14 +95,14 @@ class Security extends Plugin
 			$roles = $this->registerRoles();
 	
 			$activeResources = $this->registerActiveAreaResources();
-			$this->attachRoleToResource('Active', $activeResources);
+			$this->grantAccess('Active', $activeResources);
 
 			$trialResources = $this->registerTrialAreaResources();
-			$this->attachRoleToResource('In_trial', $trialResources);			
+			$this->grantAccess('In_trial', $trialResources);			
 			
 			
 			$publicResources = $this->registerPublicAreaResources();
-			$this->attachPublicResource($roles, $publicResources);
+			$this->grantPublicResource($roles, $publicResources);
 
 			$this->persistent->acl = $this->acl;
 		}
