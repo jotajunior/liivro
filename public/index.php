@@ -47,6 +47,16 @@ try {
     	return $session;
 	});
 
+	$di->set('dispatcher', function() use ($di) {
+	    $eventsManager = $di->getShared('eventsManager');
+    	$security = new Security($di);
+    	$eventsManager->attach('dispatch', $security);
+	    $dispatcher = new Phalcon\Mvc\Dispatcher();
+    	$dispatcher->setEventsManager($eventsManager);
+
+    	return $dispatcher;
+	});
+
     //Handle the request
     $application = new \Phalcon\Mvc\Application($di);
 
