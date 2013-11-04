@@ -35,7 +35,7 @@ class Users extends \Phalcon\Mvc\Model
 										));
 	}
 
-	private function extractUserInformation()
+	public function extractUserInformation()
 	{
 		$user = $this->getByUid();
 
@@ -47,25 +47,23 @@ class Users extends \Phalcon\Mvc\Model
 		$this->general_email = $user['general_email'];
 		$this->university_email = $user['university_email'];
 		$this->name = $user['name'];
-		$this->status = $user['status'];
 		$this->created_at = $user['created_at'];
-		
+		$user['status'] = $this->status;
+
 		return $user;
 	}
 
 	private function checkStatus()
 	{
-		if ($this->status == self::ACTIVE)
+		if ($this->status === self::ACTIVE)
 			return true;
 		
 		$now = new DateTime('now');
-		$now = $now->format('Y-m-d H:i:s');
 		$then = new DateTime($this->created_at);
 
 		$interval = $now->diff($then)->format("%d");
 
 		if ($interval >= $this->config->trial->daysToExpire) {
-		
 			$this->status = self::INVALID;
 		
 			return $this->db->update(
@@ -74,6 +72,9 @@ class Users extends \Phalcon\Mvc\Model
 					   		  array(self::INVALID),
 					   		  "id = ".$this->id
 					);
+		} else {
+			$this->status = self::IN_TRIAL;
+			return true;
 		}
 	}
 
@@ -108,18 +109,17 @@ class Users extends \Phalcon\Mvc\Model
 	private function facebookInformationIsRefreshed()
 	{
 		$user = $this->getByUid();
-
+	
 		if ($user) {
 			$lastUpdated = $user['last_updated'];
 
 
 			$now = new DateTime('now');
-			$now = $now->format('Y-m-d H:i:s');
 			$then = new DateTime($lastUpdated);
 
 			$interval = $now->diff($then)->format("%d");
 
-			$this->last_updated = $now;
+			$this->last_updated = $now->format("Y-m-d H:i:s");
 
 			if ($lastUpdated == NULL)
 				return false;
@@ -160,16 +160,14 @@ class Users extends \Phalcon\Mvc\Model
 	}
 	
 	public function facebookAuth()
-	{	
+	{
 		if ($this->isAuthenticatedOnFacebook()) {
-			$this->getUserFacebookInformation();
 			$this->checkStatus();
-			
 			if (!$this->facebookInformationIsRefreshed()) {
 				return $this->refreshInformation();
 			}
+			return true;
 		}
-
 		return false;
 	}
 	

@@ -1,8 +1,8 @@
 <?php
+
 use Phalcon\Events\Event,
 	Phalcon\Mvc\User\Plugin,
-	Phalcon\Mvc\Dispatcher,
-	Phalcon\Acl;
+	Phalcon\Mvc\Dispatcher;
 
 /**
  * Security
@@ -15,96 +15,71 @@ class Security extends Plugin
 	public function __construct($dependencyInjector)
 	{
 		$this->_dependencyInjector = $dependencyInjector;
-		$this->session = \Phalcon\DI\FactoryDefault::getDefault()->getShared('session');
 	}
 
 	private function getRole()
 	{
 		$status = $this->session->get('status');
         if (!$status) {
-            $role = 'Visitor';
+            $role = 'visitor';
         } else {
 			switch ($status) {
 				case 0:
-					$role = 'Active';
+					$role = 'active';
 					break;
 				case 1:
-					$role = 'In_trial';
+					$role = 'trial';
 					break;
 				case 2:
-					$role = 'Invalid';
+					$role = 'invalid';
 					break;
 				default:
-					$role = 'Visitor';
+					$role = 'visitor';
 					break;
 			}
         }
 		return $role;
 	}
 
-	public function getAcl()
+	private function isAllowed($role, $controller, $action, $acl)
 	{
-		if (!isset($this->persistent->acl)) {
-
-			$acl = new Phalcon\Acl\Adapter\Memory();
-
-			$acl->setDefaultAction(Phalcon\Acl::DENY);
-
-			//Register roles
-			$roles = array(
-				'Active' => new Phalcon\Acl\Role('Active'),
-				'In_trial' => new Phalcon\Acl\Role('In_trial'),
-				'Invalid' => new Phalcon\Acl\Role('Invalid'),
-				'Visitor' => new Phalcon\Acl\Role('Visitor')
-			);
-			foreach ($roles as $role) {
-				$acl->addRole($role);
-			}
-
-			//Private area resources
-			$privateResources = array(
-				'index' => array('index', 'testSession'),
-				'listing' => array('index'),
-				'books' => array('show', 'create')
-			);
-			foreach ($privateResources as $resource => $actions) {
-				$acl->addResource(new Phalcon\Acl\Resource($resource), $actions);
-			}
-
-			//Public area resources
-			$publicResources = array(
-				'index' => array('index', 'testSession'),
-			);
-			foreach ($publicResources as $resource => $actions) {
-				$acl->addResource(new Phalcon\Acl\Resource($resource), $actions);
-			}
-
-			$protectedResources = array(
-					'index' => array('index'),
-					'listing' => array('index')
-				);
-			foreach ($protectedResources as $resource => $actions) {
-				$acl->addResource(new Phalcon\Acl\Resource($resource), $actions);
-			}
-			//Grant access to public areas to both users and guests
-			foreach ($roles as $role) {
-				foreach ($publicResources as $resource => $actions) {
-					$acl->allow($role->getName(), $resource, '*');
-				}
-			}
-
-			//Grant acess to private area to role Users
-			foreach ($privateResources as $resource => $actions) {
-				foreach ($actions as $action){
-					$acl->allow('Active', $resource, $action);
-				}
-			}
-
-			//The acl is stored in session, APC would be useful here too
-			$this->persistent->acl = $acl;
+		if (!isset($acl[$role][$controller])) {
+			return false;
 		}
 
-		return $this->persistent->acl;
+		return in_array($action, $acl[$role][$controller]);
+	}
+
+	public function getAcl()
+	{
+		//if (!isset($this->persistent->aclArray)) {
+			$acl = array();
+
+			$active = array(
+				"index" => array("index", "logout", "home", "auth")
+				);
+
+			$trial = array(
+				"index" => array("index", "logout", "home", "auth")
+				);
+
+			$invalid = array(
+				"index" => array("index", "logout", "home", "auth")
+				);
+
+			$visitor = array(
+				"index" => array("index", "auth")
+				);
+
+			$acl['active'] = $active;
+			$acl['trial'] = $trial;
+			$acl['invalid'] = $invalid;
+			$acl['visitor'] = $visitor;
+
+			$this->persistent->aclArray = $acl;
+		//}
+
+		return $this->persistent->aclArray;
 	}
 
 	/**
@@ -112,24 +87,19 @@ class Security extends Plugin
 	 */
 	public function beforeDispatch(Event $event, Dispatcher $dispatcher)
 	{
-
 		$role = $this->getRole();
-
 		$controller = $dispatcher->getControllerName();
 		$action = $dispatcher->getActionName();
 
 		$acl = $this->getAcl();
 
-		$allowed = $acl->isAllowed($role, $controller, $action);
+		$allowed = $this->isAllowed($role, $controller, $action, $acl);
 
-		if ($allowed != Acl::ALLOW) {
-			$this->flash->error("You don't have access to this module");
-			$dispatcher->forward(
-				array(
-					'controller' => 'index',
-					'action' => 'index'
-				)
-			);
+		if (!$allowed) {
+			$response = new \Phalcon\Http\Response();
+			$response->redirect();
+			$response->send();
+
 			return false;
 		}
 

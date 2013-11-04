@@ -22,7 +22,7 @@ try {
     $di->setShared('config', $config);
 
     $di->set('view', function() use ($config) {
-        $view = new \Phalcon\Mvc\View\Simple();
+        $view = new \Phalcon\Mvc\View();
         $view->setViewsDir($config->application->viewsDir);
         return $view;
     }, true);
@@ -41,12 +41,6 @@ try {
             "dbname" => $config->database->name
         ));
     });
-    
-    $di->setShared('session', function() {
-    	$session = new \Phalcon\Session\Adapter\Files();
-    	$session->start();
-    	return $session;
-	});
 
 	$di->set('dispatcher', function() use ($di) {
 	    $eventsManager = $di->getShared('eventsManager');
@@ -58,10 +52,17 @@ try {
     	return $dispatcher;
 	});
 
+    $di->setShared('session', function() {
+        $session = new \Phalcon\Session\Adapter\Files();
+        $session->start();
+        return $session;
+    });
+
+
     //Handle the request
     $application = new \Phalcon\Mvc\Application($di);
 
-	$application->useImplicitView(false);
+	$application->useImplicitView(true);
 
     echo $application->handle()->getContent();
 
