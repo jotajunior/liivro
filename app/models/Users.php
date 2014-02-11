@@ -19,11 +19,6 @@ class Users extends \Phalcon\Mvc\Model
 
 	public function initialize()
 	{
-		$this->hasMany("id", "Books", "user_id");
-		$this->belongsTo("university", "Universities", "id");
-		$this->skipAttributesOnCreate(array('created_at'));
-        $this->skipAttributesOnUpdate(array('last_updated'));
-
         $this->config = \Phalcon\DI\FactoryDefault::getDefault()->getShared('config');
         $this->db = \Phalcon\DI\FactoryDefault::getDefault()->get('db');
         $this->url = \Phalcon\DI\FactoryDefault::getDefault()->getShared('url');
@@ -41,6 +36,8 @@ class Users extends \Phalcon\Mvc\Model
 
 		if ($user == array())
 			return false;
+
+		$this->checkStatus($user);
 		
 		$this->id = $user['id'];
 		$this->university = $user['university'];
@@ -53,10 +50,22 @@ class Users extends \Phalcon\Mvc\Model
 		return $user;
 	}
 
-	private function checkStatus()
+	private function checkStatus($user = NULL)
 	{
-		if ($this->status === self::ACTIVE)
+		if ($user === NULL) {
+			$user = $this->getByUid();
+		}
+
+		if (!$user) {
+			$this->status = self::IN_TRIAL;
 			return true;
+		} else {
+			$this->status = $user['status'];
+		}
+
+		if ($this->status == self::ACTIVE) {
+			return true;
+		}
 		
 		$now = new DateTime('now');
 		$then = new DateTime($this->created_at);
@@ -113,7 +122,6 @@ class Users extends \Phalcon\Mvc\Model
 		if ($user) {
 			$lastUpdated = $user['last_updated'];
 
-
 			$now = new DateTime('now');
 			$then = new DateTime($lastUpdated);
 
@@ -134,8 +142,9 @@ class Users extends \Phalcon\Mvc\Model
 	public function refreshInformation()
 	{
 		$user = $this->getByUid();
-
+		
 		if (!$user) {
+			$this->getUserFacebookInformation();
 			$this->status = self::IN_TRIAL;
 			return $this->save();
 		} else {
@@ -143,7 +152,7 @@ class Users extends \Phalcon\Mvc\Model
 				"users",
 				array("last_updated"),
 				array($this->last_updated),
-				"uid = ".$this->uid
+				"uid = " . $this->uid
 				);
 		}
 		
@@ -163,6 +172,7 @@ class Users extends \Phalcon\Mvc\Model
 	{
 		if ($this->isAuthenticatedOnFacebook()) {
 			$this->checkStatus();
+
 			if (!$this->facebookInformationIsRefreshed()) {
 				return $this->refreshInformation();
 			}
@@ -175,13 +185,15 @@ class Users extends \Phalcon\Mvc\Model
 	{
 		settype($university_id, 'int');
 		
-		if (!$university_id) return false;
+		if (!$university_id) {
+			return false;
+		}
 
 		return $this->db->update(
 				"users",
-				array("university", "status"),
-				array($university_id, self::ACTIVE),
-				"id = ".$this->id
+				array("university", "status", "university_email"),
+				array($university_id, self::ACTIVE, $this->university_email),
+				"id = " . $this->id
 				);
 	}
 }

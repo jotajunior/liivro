@@ -15,12 +15,14 @@ class Security extends Plugin
 	public function __construct($dependencyInjector)
 	{
 		$this->_dependencyInjector = $dependencyInjector;
+		$this->session = \Phalcon\DI\FactoryDefault::getDefault()->getShared('session');
 	}
 
 	private function getRole()
 	{
 		$status = $this->session->get('status');
-        if (!$status) {
+
+        if ($status === false || $status === NULL) {
             $role = 'visitor';
         } else {
 			switch ($status) {
@@ -33,8 +35,11 @@ class Security extends Plugin
 				case 2:
 					$role = 'invalid';
 					break;
-				default:
+				case 3:
 					$role = 'visitor';
+					break;
+				default:
+					throw new \Exception("Invalid value for status code.");
 					break;
 			}
         }
@@ -56,15 +61,19 @@ class Security extends Plugin
 			$acl = array();
 
 			$active = array(
-				"index" => array("index", "logout", "home", "auth")
+				"index" => array("index", "logout", "home", "auth"),
+				"university" => array("register", "doRegister", "verify"),
+				"book" => array("create", "doCreate")
 				);
 
 			$trial = array(
-				"index" => array("index", "logout", "home", "auth")
+				"index" => array("index", "logout", "home", "auth"),
+				"university" => array("register", "doRegister", "verify"),
 				);
 
 			$invalid = array(
-				"index" => array("index", "logout", "home", "auth")
+				"index" => array("index", "logout", "home", "auth"),
+				"university" => array("register", "doRegister", "verify"),
 				);
 
 			$visitor = array(
@@ -76,10 +85,10 @@ class Security extends Plugin
 			$acl['invalid'] = $invalid;
 			$acl['visitor'] = $visitor;
 
-			$this->persistent->aclArray = $acl;
+		//	$this->persistent->aclArray = $acl;
 		//}
 
-		return $this->persistent->aclArray;
+		return $acl; //$this->persistent->aclArray;
 	}
 
 	/**
@@ -94,7 +103,7 @@ class Security extends Plugin
 		$acl = $this->getAcl();
 
 		$allowed = $this->isAllowed($role, $controller, $action, $acl);
-
+	//	echo $role, $controller, $action; die();
 		if (!$allowed) {
 			$response = new \Phalcon\Http\Response();
 			$response->redirect();
@@ -102,7 +111,7 @@ class Security extends Plugin
 
 			return false;
 		}
-
+		return true;
 	}
 
 }

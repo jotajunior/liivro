@@ -24,8 +24,6 @@ class IndexController extends \Phalcon\Mvc\Controller
 
 	public function homeAction()
 	{
-		echo "Ola, ".$this->session->get('name');
-		echo "<a href='/index/logout'>logout</a>";
 	}
 
 	private function registerLoginSessions($userInformation)
@@ -50,5 +48,6 @@ class IndexController extends \Phalcon\Mvc\Controller
 	{
 		$this->session->destroy();
 		$this->response->redirect();
+		$this->view->disable();
 	}
 }

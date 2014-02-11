@@ -4,11 +4,8 @@ class Universities extends \Phalcon\Mvc\Model
 {
 	public function initialize()
 	{
-		$this->hasMany("id", "Users", "university");
-
         $this->config = \Phalcon\DI\FactoryDefault::getDefault()->getShared('config');
         $this->db = \Phalcon\DI\FactoryDefault::getDefault()->get('db');
-        $this->session = \Phalcon\DI\FactoryDefault::getDefault()->getShared('session');
         $this->url = \Phalcon\DI\FactoryDefault::getDefault()->getShared('url');
 	}
 	
@@ -25,8 +22,8 @@ class Universities extends \Phalcon\Mvc\Model
 		$exploded = explode(".", $host);
 		$number_of_dots = count($exploded) - 1;
 
-		if ($number_of_dots == 2) {
-			return $exploded[1].'.'.$exploded[2]; 
+		if ($number_of_dots === 2) {
+			return $exploded[1] . "." . $exploded[2]; 
 		}
 		
 		return $host;
@@ -52,7 +49,7 @@ class Universities extends \Phalcon\Mvc\Model
 					);
 	}
 
-	private function checkIfIsSupported($email)
+	public function checkIfIsSupported($email)
 	{
 		$host = $this->getEmailHost($email);
 		$supported = $this->getListOfSupportedEmailHosts();
@@ -66,57 +63,70 @@ class Universities extends \Phalcon\Mvc\Model
 		throw new \InvalidArgumentException("Your university is not currently supported.");
 	}
 
-	private function saveVerificationHash($hash, $email)
+	private function saveVerificationHash($user_id, $hash, $email)
 	{
+		settype($user_id, "integer");
+
 		return $this->db->insert(
 						 "verification_hashes",
-						 array("email", "hash"),
-						 array($email, $hash)
+						 array($email, $hash, $user_id),
+						 array("email", "hash", "user_id")
 				);
 	}
 	
-	private function deleteVerificationHash($hash, $email)
+	public function deleteVerificationHash($user_id)
 	{
-		return $this->db->execute("DELETE FROM verification_hashes WHERE email = ? AND hash = ?", array(1 => $email, 2 => $hash));
+		settype($user_id, 'integer');
+		return $this->db->delete("verification_hashes", "user_id = " . $user_id);
 	}
 
-	private function checkVerificationHash($hash, $email)
+	public function checkVerificationHash($hash, $email, $user_id)
 	{
-		$hash = urldecode($hash);
+		settype($user_id, "integer");
+
 		$email = urldecode($email);
-		
-		$sql = "SELECT * FROM verification_hashes WHERE hash = :hash AND email = :email ORDER BY id DESC LIMIT 1";
-		$bindParams = array("hash" => $hash, "email" => $email);
+
+		$sql = "SELECT * FROM verification_hashes WHERE hash = :hash AND email = :email AND user_id = :user_id";
+		$bindParams = array("hash" => $hash, "email" => $email, "user_id" => $user_id);
 		
 		$result = $this->db->fetchOne($sql, \Phalcon\Db::FETCH_ASSOC, $bindParams);
 		
-		if ($result) return true;
+		if ($result) {
+			return true;
+		}
+
 		return false;
 	}
 
-	private function generateVerificationUrl($hash, $email)
+	private function generateVerificationUrl($user_id, $hash, $email)
 	{
-		$url = $this->url->get("user/verify");
-		$url .= "/".urlencode($hash)."/".urlencode($email);
+		settype($user_id, "integer");
+
+		$url = $this->url->get("university/verify");
+		$url .= "/" . $hash . "/" . urlencode($email) . "/" . $user_id;
 
 		return $url;
 	}
 
-	private function generateVerificationHash($email)
+	private function generateVerificationHash($email, $user_id)
 	{
+		settype($user_id, 'integer');
+
 		$salt = "lKisYuR5o09dm@wt%ahyO9s8&s1*9()s_=";
 		$salt .= $email;
 		$salt .= uniqid('', true);
-		
-		return password_hash($salt, PASSWORD_DEFAULT);
+		$salt2 = "koo9a8jJdhnMMajdnbY7*7a%%42$#afG";
+		$salt2 .= $user_id * 97.32;
+
+		return sha1($salt2 . md5($salt));
 	}
 
-	private function sendEmail($hash, $email)
+	private function sendEmail($hash, $email, $user_id)
 	{
 		$sendgrid = new SendGrid($this->config->sendgrid->username, $this->config->sendgrid->password);
 		$mail = new SendGrid\Mail();
 		
-		$verification_url = $this->generateVerificationUrl($hash, $email);
+		$verification_url = $this->generateVerificationUrl($user_id, $hash, $email);
 		
 		$mail->addTo($email)
 			 ->setFrom($this->config->sendgrid->noreply)
@@ -124,22 +134,22 @@ class Universities extends \Phalcon\Mvc\Model
 			 ->setHtml($verification_url);
 
 		if (!$sendgrid->web->send($mail)) {
-			$this->deleteVerificationHash($hash, $email);
+			$this->deleteVerificationHash($user_id);
 			throw new \Exception("We failed sending your email. Please, try again.");
 		}
 	}
 
 	private function checkIfIsAlreadyActivated($id)
 	{
-		settype($uid, 'int');
+		settype($id, 'int');
 		$sql = "SELECT status FROM users WHERE id = :id";
-		$bindParams = array("id" => $uid);
+		$bindParams = array("id" => $id);
 		
 		$result = $this->db->fetchOne($sql, \Phalcon\Db::FETCH_ASSOC, $bindParams);
 		
 		if ($result == array())
 			throw new \Exception("Invalid user id for verification e-mail.");
-		else if ($result[0]['status'] == 0)
+		else if ($result['status'] == 0)
 			throw new \Exception("Your account has already been activated.");
 	}
 
@@ -147,9 +157,9 @@ class Universities extends \Phalcon\Mvc\Model
 	{
 		$this->checkIfIsSupported($email);
 		$this->checkIfIsAlreadyActivated($id);
-		
-		$hash = $this->generateVerificationHash($email);
-		$this->saveVerificationHash($hash, $email);
-		$this->sendEmail($hash, $email);
+		$hash = $this->generateVerificationHash($email, $id);
+		$this->deleteVerificationHash($id);
+		$this->saveVerificationHash($id, $hash, $email);
+		$this->sendEmail($hash, $email, $id);
 	}
 }
