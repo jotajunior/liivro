@@ -1,7 +1,89 @@
+<?php $this->partial('shared/listing/base'); ?>
+
+<!-- Start Header -->
+
+<?php $this->partial('shared/listing/header'); ?>
+
+ <!-- End Header -->
+
+
+
+<div class="container">
+
+ <!-- Start Info Unit -->
+
+<!--<?php $this->partial('shared/listing/trial'); ?>-->
+
+ <!-- End Info Unit -->
+
+<div>
+ 
+<div class="row-fluid" >
+<div class="span9 main-section">
+
+
+ <!-- Options bar (Left Section) -->
+
+<div class="options-bar"><h3>Cadastre um livro!</h3>
+</div>
+
+ <!-- End Options Bar -->
+
+
+ <!-- Start Left Section -->
+
+<div class="row-fluid">
+
+
 <form action="http://liivro.com/book/doCreate" method="POST" enctype="multipart/form-data">
-	Title: <input type="text" name="title" id="title" /><br />
-	Price: <input type="text" name="price" id="price" /><br />
-	Category: <input type="text" name="category" id="category" /><br />
-	Picture: <input type="file" name="picture" id="picture" /><br />
-	<input type="submit" value="Enviar" /><br />
+	<table>
+		<tr>
+			<td><input type="text" name="title" id="title" placeholder="Título" class="input-block-level"/></td>
+		</tr>
+		<tr>
+			<td><input type="text" name="price" id="price" placeholder="Preço" class="input-block-level"/></td>
+		</tr>
+		<tr><td>
+<select name="category" id="category">
+<option value="1">Matemática</option><option value="2">Física</option><option value="3">Biologia</option><option value="4">Geografia</option><option value="5">Estatística</option><option value="6">Computação</option><option value="7">Administração</option><option value="8">Economia</option><option value="9">História</option><option value="10">Química</option><option value="11">Design</option><option value="12">Artes</option><option value="13">Outros</option></select></td>
+		</tr>
+		<tr>
+			<td>Foto <input type="file" name="picture" id="picture" class="input-block-level"/></td>
+		</tr>
+		<tr>
+			<td><button class="btn btn-large btn-primary" type="submit">Enviar</button></td>
+		</tr>
+	</table>
 </form>
+
+</div>
+
+
+</div>
+
+ <!-- End Left Section -->
+
+ <!-- Start Right Section -->
+  <div id="side-section" class="span3">
+   <br />
+   
+    <br />
+    
+    
+
+
+
+</div>
+<hr>
+</div>
+</div>
+</div>
+
+<?php $this->partial('shared/listing/footer'); ?>
+
+
+
+    <!-- Include Javascript/JQuery Assets
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+<?php $this->partial('shared/listing/bottom'); ?>

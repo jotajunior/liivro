@@ -1,7 +1,69 @@
-<?php
+<?php $this->partial('shared/listing/base'); ?>
+
+<!-- Start Header -->
+
+<?php $this->partial('shared/listing/header'); ?>
+
+ <!-- End Header -->
+
+
+
+<div class="container">
+
+ <!-- Start Info Unit -->
+
+<!--<?php $this->partial('shared/listing/trial'); ?>-->
+
+ <!-- End Info Unit -->
+
+<div>
+ 
+<div class="row-fluid" >
+<div class="span9 main-section">
+
+
+ <!-- Options bar (Left Section) -->
+ <!-- End Options Bar -->
+
+
+ <!-- Start Left Section -->
+
+<div class="row-fluid">
+	<h3><?php
 	if ($success) {
-		echo "Your account has been activated successfuly.";
+		echo "Sua conta foi ativada com sucesso!";
 	} else {
-		echo "We had trouble verifying your account. Please, try again.";
+		echo "Desculpe. Tivemos problemas ativando sua conta.";
 	}
-?>
+?></h3>
+</div>
+
+
+</div>
+
+ <!-- End Left Section -->
+
+ <!-- Start Right Section -->
+  <div id="side-section" class="span3">
+   <br />
+   
+    <br />
+    
+    
+
+
+
+</div>
+<hr>
+</div>
+</div>
+</div>
+
+<?php $this->partial('shared/listing/footer'); ?>
+
+
+
+    <!-- Include Javascript/JQuery Assets
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+<?php $this->partial('shared/listing/bottom'); ?>

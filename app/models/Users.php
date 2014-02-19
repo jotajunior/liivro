@@ -2,7 +2,7 @@
 
 class Users extends \Phalcon\Mvc\Model
 {
-	private $id;
+	private $id = NULL;
 	private $uid = NULL;
 	private $name;
 	private $general_email = NULL;
@@ -195,5 +195,34 @@ class Users extends \Phalcon\Mvc\Model
 				array($university_id, self::ACTIVE, $this->university_email),
 				"id = " . $this->id
 				);
+	}
+
+	public function getBooksById()
+	{
+		settype($this->id, 'int');
+
+		if ($this->id === NULL) {
+			throw new \Exception("Undefined user id. Unable to load book list.");
+		}
+
+		$sql = "SELECT * FROM books WHERE user_id = :id";
+		$bindParam = array("id" => $this->id);
+
+		return $this->db->fetchAll($sql, \Phalcon\Db::FETCH_ASSOC, $bindParam);
+	}
+
+	// prevent phalcon overhead on Users::find()
+	public function getById($id)
+	{
+		settype($id, "int");
+
+		if ($id == 0) {
+			return false;
+		}
+
+		$sql = "SELECT * FROM users WHERE id = :id";
+		$bindParam = array("id" => $id);
+
+		return $this->db->fetchOne($sql, \Phalcon\Db::FETCH_ASSOC, $bindParam);
 	}
 }

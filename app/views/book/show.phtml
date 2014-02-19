@@ -12,8 +12,6 @@
 
  <!-- Start Info Unit -->
 
-<!--<?php $this->partial('shared/listing/trial'); ?>-->
-
  <!-- End Info Unit -->
 
 <div>
@@ -24,8 +22,8 @@
 
  <!-- Options bar (Left Section) -->
 
-<div class="options-bar"><h3>Cadastre seu e-mail de universidade!</h3>
-</div>
+<?php if (isset($book) && $book != array() && $book != false): ?>
+
 
  <!-- End Options Bar -->
 
@@ -33,26 +31,24 @@
  <!-- Start Left Section -->
 
 <div class="row-fluid">
-<form action="http://liivro.com/university/doRegister" method="POST">
-	<input type="text" name="user_email" id="user_email" /><br />
-	<button name="send" type="submit" value="Submit"  class="btn btn-small">Cadastrar</button>
-</form>
+<center><img src="<?php echo $book['picture']; ?>" /><br />
+<h4><?php echo $book['title']; ?></h4>
+<h5>R$ <?php echo $book['price']; ?></h5></center>
 </div>
 
 
 </div>
-
  <!-- End Left Section -->
 
  <!-- Start Right Section -->
   <div id="side-section" class="span3">
-   <br />
-   
-    <br />
-    
+   <img src="//graph.facebook.com/<?php echo $user['uid']; ?>/picture" />&nbsp;&nbsp;<a href="//facebook.com/<?php echo $user['uid']; ?>"><?php echo $user['name']; ?></a><br /><br />
+   <strong>Contato:</strong> <br />
+   <?php echo $user['general_email']; ?><br />
+   <?php echo $user['university_email']; ?><br />
     
 
-
+<?php endif; ?>
 
 </div>
 <hr>

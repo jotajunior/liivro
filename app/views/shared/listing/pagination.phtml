@@ -1,11 +1,16 @@
+<?php if ($total_count > $perPage): ?>
 <div class="pagination pagination-small pull-right">
     <ul>
-        <li><a href="#">«</a></li>
-        <li><a href="#">1</a></li>
-        <li><a href="#">2</a></li>
-        <li><a href="#">3</a></li>
-        <li><a href="#">4</a></li>
-        <li><a href="#">5</a></li>
+    	<li><a href="#">«</a></li>
+    	<?php
+    	$page = 1;
+    	while ($total_count >= $perPage): ?>
+        <li><a href="//liivro.com/listing/index/<?php echo $category . '/' . $page; ?>"><?php echo $page; ?></a></li>
+    	<?php
+    	   $page++;
+    	   $total_count -= $perPage;
+    	endwhile; ?>
         <li><a href="#">»</a></li>
     </ul>
 </div>
+<?php endif; ?>

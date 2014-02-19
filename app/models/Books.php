@@ -2,7 +2,7 @@
 
 class Books extends \Phalcon\Mvc\Model
 {
-	public $id;
+	public $id = NULL;
 	public $title = NULL;
 	public $price = NULL;
 	public $picture = NULL;
@@ -12,32 +12,12 @@ class Books extends \Phalcon\Mvc\Model
 	public $last_updated = NULL;
 	public $created_at = NULL;
 	
-	private $page = 1;
-	private $per_page = 30;
+	public $page = 1;
+	public $per_page = 30;
 	
-	public function __set($var, $val)
+	public function initialize()
 	{
-		switch ($var) {
-			case "university":
-			case "user_id":
-			case "category":
-			case "id":
-				$this->$var = (int) $val;
-				break;
-			case "price":
-				$this->$var = (float) $val;
-				break;
-			case "title":
-				$this->$var = $val;
-				break;
-			case "picture":
-				$pic_name = $this->uploadPicture($val);
-				$this->$var = $pic_name;
-				break;
-			default:
-				throw new \Exception("$var **** You cannot create new attributes on Books.");
-				break;
-		}
+		$this->db = \Phalcon\DI\FactoryDefault::getDefault()->get('db');
 	}
 
 	public function beforeSave()
@@ -49,44 +29,16 @@ class Books extends \Phalcon\Mvc\Model
 		$this->last_updated = $now;
 	}
 
-	public function university($university)
-	{
-		settype($university, 'int');
-		
-		$this->university = $university;
-		return $this;
-	}
-	
-	public function perPage($perPage)
-	{
-		settype($perPage, 'int');
-		$this->per_page = $perPage;
-		
-		return $this;
-	}
-	
-	public function page($page)
-	{
-		settype($page, 'int');
-
-		$this->page = $page;
-		return $this;
-	}
-
-	public function category($category)
-	{
-		settype($category, 'int');
-		
-		$this->category = $category;
-		return $this;
-	}
-
 	private function getSkip()
 	{
-		if ($this->page == NULL || $this->university == NULL || $this->per_page == NULL) {
+		if ($this->page === NULL || $this->per_page === NULL) {
 			throw new \Exception("There is not enough information for pagination.");
 		}
 		
+		if ($this->page == 0) {
+			return 0;
+		}
+
 		return ($this->page - 1)*$this->per_page;
 	}
 	
@@ -106,7 +58,7 @@ class Books extends \Phalcon\Mvc\Model
 	{
 		$skip = (int) $this->getSkip();
 		
-		$sql = "SELECT * FROM books WHERE university :university AND category = :category";
+		$sql = "SELECT * FROM books WHERE university = :university AND category = :category";
 		$sql .= " ORDER BY id DESC LIMIT ".$skip.", ".$this->per_page;
 		
 		$bindParam = array("university" => $this->university, "category" => $this->category);
@@ -176,5 +128,63 @@ class Books extends \Phalcon\Mvc\Model
 		$img->destroy();
 
 		return $done;
+	}
+
+	public function getTotalCount()
+	{
+		if ($this->university == NULL) {
+			return false;
+		}
+
+		$sql = "SELECT COUNT(id) AS counter FROM books";
+		$result = $this->db->fetchOne($sql, \Phalcon\Db::FETCH_ASSOC);
+		return $result['counter'];
+	}
+
+	public function getCategories()
+	{
+		$sql = "SELECT * FROM categories";
+		return $this->db->fetchAll($sql, \Phalcon\Db::FETCH_ASSOC);
+	}
+
+	public function verifyOwnershipById($id)
+	{
+		if ($id === NULL || $this->user_id === NULL) {
+			throw new \Exception("There is no enough information to verify the ownership of this book.");
+		}
+
+		$sql = "SELECT user_id FROM books WHERE id = :id";
+		$bindParam = array("id" => $id);
+
+		$result = $this->db->fetchOne($sql, \Phalcon\Db::FETCH_ASSOC, $bindParam);
+
+		if ($result == array() || $result == FALSE) {
+			return false;
+		}
+
+		return $result['user_id'] == $this->user_id;
+	}
+
+	// to prevent phalcon overhead on Books::find()
+	public function getById($id)
+	{
+		settype($id, "int");
+
+		if ($id == 0) {
+			return false;
+		}
+
+		$sql = "SELECT * FROM books WHERE id = :id";
+		$bindParam = array("id" => $id);
+
+		return $this->db->fetchOne($sql, \Phalcon\Db::FETCH_ASSOC, $bindParam);
+	}
+
+	public function textSearch($term)
+	{
+		$sql = "SELECT * FROM books WHERE title LIKE :term";
+		$bindParam = array("term" => "%" . $term . "%");
+
+		return $this->db->fetchAll($sql, \Phalcon\Db::FETCH_ASSOC, $bindParam);
 	}
 }

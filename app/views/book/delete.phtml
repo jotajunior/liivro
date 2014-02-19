@@ -24,7 +24,12 @@
 
  <!-- Options bar (Left Section) -->
 
-<div class="options-bar"><h3>Cadastre seu e-mail de universidade!</h3>
+<div class="options-bar"><h1><?php if ($success) {
+										echo "Livro deletado com sucesso!";
+									} else {
+										echo "Desculpe :( <br />Falha ao deletar livro.";
+									}
+							?></h1>
 </div>
 
  <!-- End Options Bar -->
@@ -33,10 +38,8 @@
  <!-- Start Left Section -->
 
 <div class="row-fluid">
-<form action="http://liivro.com/university/doRegister" method="POST">
-	<input type="text" name="user_email" id="user_email" /><br />
-	<button name="send" type="submit" value="Submit"  class="btn btn-small">Cadastrar</button>
-</form>
+
+
 </div>
 
 

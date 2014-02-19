@@ -17,7 +17,7 @@ class IndexController extends \Phalcon\Mvc\Controller
 		} else {
 			$userInformation = $this->users->extractUserInformation();
 			$this->registerLoginSessions($userInformation);
-			$this->response->redirect('index/home');
+			$this->response->redirect('listing/index');
 			$this->view->disable();
 		}
 	}

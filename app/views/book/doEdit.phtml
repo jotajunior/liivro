@@ -23,20 +23,19 @@
 
 
  <!-- Options bar (Left Section) -->
-
-<div class="options-bar"><h3>Cadastre seu e-mail de universidade!</h3>
-</div>
-
  <!-- End Options Bar -->
 
 
  <!-- Start Left Section -->
 
 <div class="row-fluid">
-<form action="http://liivro.com/university/doRegister" method="POST">
-	<input type="text" name="user_email" id="user_email" /><br />
-	<button name="send" type="submit" value="Submit"  class="btn btn-small">Cadastrar</button>
-</form>
+	<h3><?php
+	if ($success) {
+		echo "Livro alterado com sucesso! <a href='//liivro.com/book/show/", $book_id, "'>Veja seu anúncio!</a>";
+	} else {
+		echo "Desculpe. Tivemos problemas ao salvar os dados.";
+	}
+?></h3>
 </div>
 
 

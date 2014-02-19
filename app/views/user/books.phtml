@@ -24,7 +24,8 @@
 
  <!-- Options bar (Left Section) -->
 
-<div class="options-bar"><h3>Cadastre seu e-mail de universidade!</h3>
+
+<div class="options-bar"><h4>Meus livros</h4>
 </div>
 
  <!-- End Options Bar -->
@@ -33,11 +34,20 @@
  <!-- Start Left Section -->
 
 <div class="row-fluid">
-<form action="http://liivro.com/university/doRegister" method="POST">
-	<input type="text" name="user_email" id="user_email" /><br />
-	<button name="send" type="submit" value="Submit"  class="btn btn-small">Cadastrar</button>
-</form>
+<?php
+if ($books == array() ||  $books == NULL) {
+	echo "<h3>Você não tem livros cadastrados ainda.</h3>";
+} else {
+	echo "<table>";
+	foreach ($books as $book) {
+		echo "<tr><td><img src='", $book['picture'], "' style='max-height: 100px; max-width: 100px;'/></td><td><a href='//liivro.com/book/show/", $book['id'], "'>", $book['title'], "</a></td><td>
+		<a href='//liivro.com/book/edit/", $book['id'], "'>Editar</a></td><td><a href='//liivro.com/book/delete/", $book['id'],"'>Excluir</a></td></tr>";
+	}
+	echo "</table>";
+}
+?>
 </div>
+
 
 
 </div>

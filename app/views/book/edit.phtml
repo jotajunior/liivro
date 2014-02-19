@@ -1,0 +1,96 @@
+<?php $this->partial('shared/listing/base'); ?>
+
+<!-- Start Header -->
+
+<?php $this->partial('shared/listing/header'); ?>
+
+ <!-- End Header -->
+
+
+
+<div class="container">
+
+ <!-- Start Info Unit -->
+
+<!--<?php $this->partial('shared/listing/trial'); ?>-->
+
+ <!-- End Info Unit -->
+
+<div>
+ 
+<div class="row-fluid" >
+<div class="span9 main-section">
+
+
+ <!-- Options bar (Left Section) -->
+
+<div class="options-bar"><h3>Edite seu anúncio</h3>
+</div>
+
+ <!-- End Options Bar -->
+
+
+ <!-- Start Left Section -->
+
+<div class="row-fluid">
+
+
+<form action="http://liivro.com/book/doEdit" method="POST" enctype="multipart/form-data">
+	<input type="hidden" name="id" id="id" value="<?php echo $book['id']; ?>" />
+	<table>
+		<tr>
+			<td><input type="text" name="title" id="title" value="<?php echo $book['title']; ?>" class="input-block-level"/></td>
+		</tr>
+		<tr>
+			<td><input type="text" name="price" id="price" value="<?php echo $book['price']; ?>" class="input-block-level"/></td>
+		</tr>
+		<tr><td>
+		<select name="category" id="category">
+			<?php foreach ($categories as $category) {
+				if ($category['id'] == $book['category']) {
+					echo "<option value='", $category['id'], "' selected='selected'>", utf8_encode($category['name']), "</option>";
+				} else {
+					echo "<option value='", $category['id'], "'>", utf8_encode($category['name']), "</option>";
+				}
+			}
+			?>
+		</select>
+		</td>
+		</tr>
+		<tr>
+			<td><button class="btn btn-large btn-primary" type="submit">Editar</button></td>
+		</tr>
+	</table>
+</form>
+
+</div>
+
+
+</div>
+
+ <!-- End Left Section -->
+
+ <!-- Start Right Section -->
+  <div id="side-section" class="span3">
+   <br />
+   
+    <br />
+    
+    
+
+
+
+</div>
+<hr>
+</div>
+</div>
+</div>
+
+<?php $this->partial('shared/listing/footer'); ?>
+
+
+
+    <!-- Include Javascript/JQuery Assets
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+<?php $this->partial('shared/listing/bottom'); ?>

@@ -11,6 +11,10 @@ use Phalcon\Events\Event,
  */
 class Security extends Plugin
 {
+	const ACTIVE = 'active';
+	const TRIAL = 'trial';
+	const INVALID = 'invalid';
+	const VISITOR = 'visitor';
 
 	public function __construct($dependencyInjector)
 	{
@@ -23,20 +27,20 @@ class Security extends Plugin
 		$status = $this->session->get('status');
 
         if ($status === false || $status === NULL) {
-            $role = 'visitor';
+            $role = self::VISITOR;
         } else {
 			switch ($status) {
 				case 0:
-					$role = 'active';
+					$role = self::ACTIVE;
 					break;
 				case 1:
-					$role = 'trial';
+					$role = self::TRIAL;
 					break;
 				case 2:
-					$role = 'invalid';
+					$role = self::INVALID;
 					break;
 				case 3:
-					$role = 'visitor';
+					$role = self::VISITOR;
 					break;
 				default:
 					throw new \Exception("Invalid value for status code.");
@@ -63,27 +67,31 @@ class Security extends Plugin
 			$active = array(
 				"index" => array("index", "logout", "home", "auth"),
 				"university" => array("register", "doRegister", "verify"),
-				"book" => array("create", "doCreate")
+				"book" => array("create", "doCreate", "delete", "show", "search", "edit", "doEdit"),
+				"listing" => array("index"),
+				"user" => array("books")
 				);
 
 			$trial = array(
 				"index" => array("index", "logout", "home", "auth"),
 				"university" => array("register", "doRegister", "verify"),
+				"book" => array("show", "search"),
+				"listing" => array("index")
 				);
 
 			$invalid = array(
 				"index" => array("index", "logout", "home", "auth"),
-				"university" => array("register", "doRegister", "verify"),
+				"university" => array("register", "doRegister", "verify")
 				);
 
 			$visitor = array(
 				"index" => array("index", "auth")
 				);
 
-			$acl['active'] = $active;
-			$acl['trial'] = $trial;
-			$acl['invalid'] = $invalid;
-			$acl['visitor'] = $visitor;
+			$acl[self::ACTIVE] = $active;
+			$acl[self::TRIAL] = $trial;
+			$acl[self::INVALID] = $invalid;
+			$acl[self::VISITOR] = $visitor;
 
 		//	$this->persistent->aclArray = $acl;
 		//}
@@ -103,7 +111,7 @@ class Security extends Plugin
 		$acl = $this->getAcl();
 
 		$allowed = $this->isAllowed($role, $controller, $action, $acl);
-	//	echo $role, $controller, $action; die();
+
 		if (!$allowed) {
 			$response = new \Phalcon\Http\Response();
 			$response->redirect();
