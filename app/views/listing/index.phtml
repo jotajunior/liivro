@@ -15,6 +15,27 @@
 <?php
 if (!$confirmed_user) {
   $this->partial('shared/listing/trial');
+} else if (!$defined_major) {
+?>
+<div id="info-unit"> <div class="alert alert-block alert-info fade in">
+<button type="button" class="close" data-dismiss="alert">×</button>
+<h4 class="alert-heading">Defina qual seu curso!</h4>
+<p>Para uma navegação mais personalizada, por favor, diga qual seu curso:
+</p>
+<form action="//liivro.com/user/doDefineMajor" method="POST">
+  <select id="major" name="major">
+    <option id="1">Ciência da Computação</option>
+    <option id="2">Matemática</option>
+    <option id="3">Química</option>
+    <option id="4">Estatística</option>
+    <option id="5">Matemática Computacional</option>
+    <option id="0">Outros</option>
+  </select>
+<p><button type="submit" class="btn btn-primary">Definir curso</button></p>
+</form>
+</div>
+</div>
+<?php
 }
 ?>
 

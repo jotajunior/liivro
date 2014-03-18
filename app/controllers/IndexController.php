@@ -40,6 +40,7 @@ class IndexController extends \Phalcon\Mvc\Controller
 		$this->session->set('name', $userInformation['name']);
 		$this->session->set('status', $userInformation['status']);
 		$this->session->set('created_at', $userInformation['created_at']);
+		$this->session->set('major', $userInformation['major']);
 		
 		return true;
 	}

@@ -112,6 +112,8 @@ class BookController extends \Phalcon\Mvc\Controller
 		$books = new Books();
 		$books->title = $this->request->getPost("title", "string");
 		$books->price = $this->request->getPost("price", "float");
+		$books->isbn = $this->request->getPost("isbn", "string");
+		$books->author = $this->request->getPost("author", "string");
 		$books->category = (int) $this->request->getPost("category", "int");
 		$books->user_id = (int) $this->session->get("id");
 		$books->university = (int) $this->session->get("university");

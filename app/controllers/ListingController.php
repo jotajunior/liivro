@@ -22,6 +22,7 @@ class ListingController extends \Phalcon\Mvc\Controller
 
 		
 		$confirmed_user = $this->session->get("status") == Users::ACTIVE;
+		$defined_major = $this->session->get("major") !== NULL;
 
 		$this->view->setVar("category", $category);
 		$this->view->setVar("page", $page);
@@ -29,5 +30,6 @@ class ListingController extends \Phalcon\Mvc\Controller
 		$this->view->setVar("confirmed_user", $confirmed_user);
 		$this->view->setVar("total_count", $total_count);
 		$this->view->setVar("perPage", $books->per_page);
+		$this->view->setVar("defined_major", $defined_major);
 	}
 }

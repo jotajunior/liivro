@@ -11,6 +11,7 @@ class Users extends \Phalcon\Mvc\Model
 	private $status = NULL;
 	private $university = NULL;
 	private $created_at = NULL;
+	private $major = NULL;
 
 	const ACTIVE = 0;
 	const IN_TRIAL = 1;
@@ -45,6 +46,8 @@ class Users extends \Phalcon\Mvc\Model
 		$this->university_email = $user['university_email'];
 		$this->name = $user['name'];
 		$this->created_at = $user['created_at'];
+		$this->major = $user['major'];
+
 		$user['status'] = $this->status;
 
 		return $user;
@@ -224,5 +227,22 @@ class Users extends \Phalcon\Mvc\Model
 		$bindParam = array("id" => $id);
 
 		return $this->db->fetchOne($sql, \Phalcon\Db::FETCH_ASSOC, $bindParam);
+	}
+
+	public function defineMajor($id, $major)
+	{
+		settype($major, "int");
+		settype($id, "int");
+
+		if ($major == 0) {
+			return false;
+		}
+
+		return $this->db->update(
+				"users",
+				array("major"),
+				array($major),
+				"id = " . $id
+				);
 	}
 }

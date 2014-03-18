@@ -11,6 +11,8 @@ class Books extends \Phalcon\Mvc\Model
 	public $category = NULL;
 	public $last_updated = NULL;
 	public $created_at = NULL;
+	public $isbn = NULL;
+	public $author = NULL;
 	
 	public $page = 1;
 	public $per_page = 30;
@@ -184,6 +186,27 @@ class Books extends \Phalcon\Mvc\Model
 	{
 		$sql = "SELECT * FROM books WHERE title LIKE :term";
 		$bindParam = array("term" => "%" . $term . "%");
+
+		return $this->db->fetchAll($sql, \Phalcon\Db::FETCH_ASSOC, $bindParam);
+	}
+
+	public function getByIsbn($isbn)
+	{
+		preg_replace("/[^0-9]/", "", $isbn);
+		$sql = "SELECT * FROM books WHERE isbn = :isbn";
+		$bindParam = array("isbn" => $isbn);
+
+		return $this->db->fetchAll($sql, \Phalcon\Db::FETCH_ASSOC, $bindParam);
+	}
+
+	public function getMostSoldBooksByIsbn($isbn, $limit)
+	{
+		settype($limit, "integer");
+
+		$sql = "SELECT books.isbn, COUNT(books.id) AS counter FROM transactions INNER JOIN books ON transactions.book = books.id
+		WHERE books.isbn = :isbn GROUP BY transactions.isbn ORDER BY counter DESC LIMIT $limit";
+
+		$bindParam = array("isbn" => $isbn);
 
 		return $this->db->fetchAll($sql, \Phalcon\Db::FETCH_ASSOC, $bindParam);
 	}
